@@ -1,13 +1,18 @@
 #!/usr/bin/env python
 import sys
+from os.path import dirname, abspath
 from optparse import OptionParser
 
 from django.conf import settings
 
 if not settings.configured:
     settings.configure(
-        DATABASE_ENGINE='django.db.backends.postgresql_psycopg2',
-        DATABASE_NAME='bitfield_test',
+        DATABASES = {
+            'default': {
+                'ENGINE': 'django.db.backends.postgresql_psycopg2',
+                'NAME': 'bitfield_test',
+            }
+        },
         INSTALLED_APPS=[
             'django.contrib.contenttypes',
             'bitfield',
@@ -17,6 +22,7 @@ if not settings.configured:
         DEBUG=False,
     )
 
+from django.test.simple import DjangoTestSuiteRunner
 
 from django_nose import NoseTestSuiteRunner
 
@@ -28,10 +34,11 @@ def runtests(*test_args, **kwargs):
 
     if not test_args:
         test_args = ['bitfield']
-
-    test_runner = NoseTestSuiteRunner(**kwargs)
-
-    failures = test_runner.run_tests(test_args)
+    parent = dirname(abspath(__file__))
+    sys.path.insert(0, parent)
+    interactive = '--no-input' not in sys.argv
+    failures = DjangoTestSuiteRunner().run_tests(test_args, verbosity=1,
+                                                 interactive=interactive)
     sys.exit(failures)
 
 if __name__ == '__main__':
